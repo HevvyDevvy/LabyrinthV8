@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "LabyrinthV8 Security Dashboard"
+description = "A human-gated security operations dashboard for monitoring file integrity alerts, reviewing sensitive-data protection requests, and inspecting a tamper-evident audit trail."
+version = "1.0.0"
+id = "artifacts/labyrinthv8"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25967
+
+[services.development]
+run = "pnpm --filter @workspace/labyrinthv8 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/labyrinthv8", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/labyrinthv8/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25967"
+BASE_PATH = "/"

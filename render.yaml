@@ -1,0 +1,39 @@
+# Render Blueprint — https://render.com/docs/infrastructure-as-code
+#
+# Deploy: push this repo to GitHub, then in the Render dashboard choose
+# "New +" -> "Blueprint" and point it at the repo. Render reads this file
+# and creates the service automatically.
+#
+# Render injects its own PORT env var into the container at runtime (the
+# Dockerfile's PORT=3000 is just a fallback default), and provides a free
+# HTTPS URL like https://labyrinthv8-api.onrender.com — that's the value to
+# set as the API_BASE_URL variable on the GitHub Pages side.
+#
+# Free plan note: the container spins down after ~15 min idle and takes
+# ~30-60s to wake back up on the next request, and its filesystem is
+# ephemeral — LABYRINTH_DATA_DIR (scan state, audit log, keystore) resets on
+# every redeploy/restart. Uncomment the `disks` block below (requires the
+# Starter plan or higher) for state that survives restarts.
+
+services:
+  - type: web
+    name: labyrinthv8-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LABYRINTH_SCAN_INTERVAL_SECONDS
+        value: "15"
+      # Set this to your GitHub Pages origin (scheme + host only, no path
+      # or trailing slash), e.g. https://your-user.github.io — required for
+      # the dashboard's browser requests to be allowed through CORS.
+      - key: ALLOWED_ORIGINS
+        value: ""
+    # disks:
+    #   - name: labyrinth-data
+    #     mountPath: /app/data
+    #     sizeGB: 1

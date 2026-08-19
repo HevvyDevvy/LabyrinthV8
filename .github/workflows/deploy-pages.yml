@@ -1,0 +1,79 @@
+name: Build & deploy dashboard to GitHub Pages
+
+# GitHub Pages only serves static files. This builds and hosts the React
+# frontend (artifacts/labyrinthv8) only. The Express API (artifacts/api-server)
+# still needs to run somewhere else (Render, Fly.io, a small VPS, etc) —
+# set its public HTTPS URL as the API_BASE_URL repository variable below so
+# the built dashboard knows where to send its /api/* calls.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dashboard (static)
+        working-directory: artifacts/labyrinthv8
+        env:
+          # Dummy value: PORT is only read by Vite's dev/preview server, but
+          # vite.config.ts requires it to be set even for a production build.
+          PORT: "5173"
+          # Project Pages are served at https://<user>.github.io/<repo>/, so
+          # every built asset path needs that "/<repo>/" prefix. If you're
+          # deploying to a user/org root page (https://<user>.github.io/) or
+          # a custom domain instead, change this to "/".
+          BASE_PATH: "/${{ github.event.repository.name }}/"
+          # Where the Express API (artifacts/api-server) is hosted. Set this
+          # as a repo Variable: Settings -> Secrets and variables -> Actions
+          # -> Variables -> New repository variable -> API_BASE_URL ->
+          # e.g. https://labyrinthv8-api.onrender.com
+          VITE_API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: pnpm run build
+
+      - name: Add .nojekyll
+        run: touch artifacts/labyrinthv8/dist/public/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: artifacts/labyrinthv8/dist/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
