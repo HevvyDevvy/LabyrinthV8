@@ -40,7 +40,7 @@
       "icon": "build-resources/icon.png",
       "target": ["dmg"]
     },
-   "win": {
+    "win": {
   "icon": "build-resources/icon.png",
   "target": ["nsis", "appx"],
   "signtoolOptions": {
