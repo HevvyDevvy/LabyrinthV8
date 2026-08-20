@@ -48,7 +48,7 @@
         "publisherName": "BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
         "signingHashAlgorithms": ["sha256"],
         "rfc3161TimeStampServer": "http://timestamp.digicert.com",
-        "sign": "./scripts/customSign.cjs"
+        "sign": "./customSign.cjs"
       }
     },
     "appx": {
