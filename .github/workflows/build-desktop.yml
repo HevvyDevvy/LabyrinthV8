@@ -76,6 +76,7 @@ jobs:
           path: |
             artifacts/desktop/release/*.dmg
             artifacts/desktop/release/*.exe
+            artifacts/desktop/release/*.appx
             artifacts/desktop/release/*.AppImage
             artifacts/desktop/release/*.deb
           if-no-files-found: warn
@@ -87,5 +88,6 @@ jobs:
           files: |
             artifacts/desktop/release/*.dmg
             artifacts/desktop/release/*.exe
+            artifacts/desktop/release/*.appx
             artifacts/desktop/release/*.AppImage
             artifacts/desktop/release/*.deb
