@@ -54,6 +54,9 @@ jobs:
 
       - name: Build installer (${{ matrix.os }})
         working-directory: .
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: ${{ matrix.build-script }}
 
       - name: Upload installer artifact
