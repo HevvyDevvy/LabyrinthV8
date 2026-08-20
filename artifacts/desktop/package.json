@@ -4,7 +4,8 @@
   "private": true,
   "description": "LabyrinthV8 desktop app — runs the dashboard and API server locally so full-system scans see the machine it's installed on, not a remote host.",
     "author": {
-    "name": "HevvyDevvy",
+    "name": "Blu Corbel aka DeadmanXXXII",
+    "username": "HevvyDevvy",
     "email": "blucorbel35@gmail.com"
   },
   "homepage": "https://github.com/HevvyDevvy/LabyrinthV8",
