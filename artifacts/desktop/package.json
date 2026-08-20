@@ -43,10 +43,8 @@
     "win": {
   "icon": "build-resources/icon.png",
   "target": ["nsis", "appx"],
-  "sign": {
-    "options": {
-      "timeStampServer": null
-    }
+  "signtoolOptions": {
+    "timeStampServer": null
   }
 },
     "appx": {
