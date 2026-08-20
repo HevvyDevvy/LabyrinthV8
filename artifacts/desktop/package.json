@@ -62,7 +62,10 @@
     "linux": {
       "icon": "build-resources/icon.png",
       "category": "Utility",
-      "target": ["AppImage", "deb"]
+      "target": ["AppImage", "deb"],
+      "executableName": "LabyrinthV8",
+      "desktopName": "LabyrinthV8",
+      "syncDesktopName": true
     }
   }
 }
