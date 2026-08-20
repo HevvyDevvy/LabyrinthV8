@@ -5,13 +5,14 @@ name: Build desktop app
 # API server to run locally, so "full-system scan" in the dashboard actually
 # sees the machine LabyrinthV8 is installed on.
 #
-# NOTE ON CODE SIGNING: these installers are NOT code-signed. Windows will
-# show a SmartScreen "unknown publisher" warning, and macOS Gatekeeper will
-# block the app until the person right-clicks -> Open (or runs
-# `xattr -d com.apple.quarantine LabyrinthV8.app`). Proper signing needs a
-# paid Apple Developer ID and a Windows code-signing certificate — add
-# CSC_LINK / CSC_KEY_PASSWORD (and the Apple equivalents) as repo secrets
-# and pass them to electron-builder here if/when you have those.
+# CODE SIGNING: CSC_LINK / CSC_KEY_PASSWORD repo secrets supply the Windows
+# code-signing certificate. On windows-latest, the "Locate real signtool.exe"
+# step points electron-builder at the system-installed signtool.exe (from the
+# Windows SDK) instead of its bundled copy, since the bundled one fails to
+# sign .appx packages with "A required function is not present". macOS
+# builds still need a paid Apple Developer ID cert wired in separately if/when
+# you have one — until then, Gatekeeper will block the .dmg until the person
+# right-clicks -> Open (or runs `xattr -d com.apple.quarantine LabyrinthV8.app`).
 
 on:
   workflow_dispatch: {}
@@ -29,16 +30,6 @@ jobs:
         include:
           - os: ubuntu-latest
             build-script: "pnpm --filter @workspace/desktop run dist -- --linux"
-     
-          - name: Locate real signtool.exe
-            id: signtool
-            shell: pwsh
-            run: |
-              $tool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
-                 Sort-Object FullName -Descending | Select-Object -First 1
-              if (-not $tool) { throw "signtool.exe not found under Windows Kits" }
-              echo "SIGNTOOL_PATH=$($tool.FullName)" >> $env:GITHUB_ENV
-
           - os: windows-latest
             build-script: "pnpm --filter @workspace/desktop run dist -- --win"
           - os: macos-latest
@@ -61,6 +52,15 @@ jobs:
 
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Locate real signtool.exe
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $tool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $tool) { throw "signtool.exe not found under Windows Kits" }
+          echo "SIGNTOOL_PATH=$($tool.FullName)" >> $env:GITHUB_ENV
 
       - name: Build installer (${{ matrix.os }})
         working-directory: .
