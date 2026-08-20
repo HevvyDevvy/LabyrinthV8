@@ -9,6 +9,7 @@
     "email": "blucorbel35@gmail.com"
   },
   "homepage": "https://github.com/HevvyDevvy/LabyrinthV8",
+  "desktopName": "LabyrinthV8",
   "main": "electron-main.cjs",
   "scripts": {
     "prepare-resources": "node ./scripts/prepare.mjs",
@@ -40,7 +41,7 @@
       "icon": "build-resources/icon.png",
       "target": ["dmg"]
     },
-    "win": {
+   "win": {
   "icon": "build-resources/icon.png",
   "target": ["nsis", "appx"],
   "signtoolOptions": {
@@ -63,9 +64,7 @@
       "icon": "build-resources/icon.png",
       "category": "Utility",
       "target": ["AppImage", "deb"],
-      "executableName": "LabyrinthV8",
-      "desktopName": "LabyrinthV8",
-      "syncDesktopName": true
+      "executableName": "LabyrinthV8"
     }
   }
-}
+   }
