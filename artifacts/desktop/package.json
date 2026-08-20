@@ -41,15 +41,16 @@
       "icon": "build-resources/icon.png",
       "target": ["dmg"]
     },
-   "win": {
-  "icon": "build-resources/icon.png",
-  "target": ["nsis", "appx"],
-  "signtoolOptions": {
-  "timeStampServer": null,
-  "rfc3161TimeStampServer": null,
-  "publisherName": "BB6CF6A1-F89B-484C-85F4-1A7E35694B74"
-  }
-},
+    "win": {
+      "icon": "build-resources/icon.png",
+      "target": ["nsis", "appx"],
+      "publisherName": "BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
+      "signingHashAlgorithms": ["sha256"],
+      "signtoolOptions": {
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+        "signToolPath": "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe"
+      }
+    },
     "appx": {
       "identityName": "TMHP.com.LabyrinthV8",
       "publisher": "CN=BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
@@ -67,4 +68,4 @@
       "executableName": "LabyrinthV8"
     }
   }
-   }
+  }
