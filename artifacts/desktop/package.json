@@ -40,12 +40,15 @@
       "icon": "build-resources/icon.png",
       "target": ["dmg"]
     },
-    "win": {
+   "win": {
   "icon": "build-resources/icon.png",
   "target": ["nsis", "appx"],
-  "publisherName": "BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
   "signtoolOptions": {
-    "timeStampServer": null
+    "certificateFile": "C:\\fakepath\\ignored.pfx",
+    "password": "ignored",
+    "timeStampServer": null,
+    "rfc3161TimeStampServer": null,
+    "publisherName": "BB6CF6A1-F89B-484C-85F4-1A7E35694B74"
   }
 },
     "appx": {
