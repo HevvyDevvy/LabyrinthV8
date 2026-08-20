@@ -29,6 +29,16 @@ jobs:
         include:
           - os: ubuntu-latest
             build-script: "pnpm --filter @workspace/desktop run dist -- --linux"
+     
+          - name: Locate real signtool.exe
+            id: signtool
+            shell: pwsh
+            run: |
+              $tool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" |
+                 Sort-Object FullName -Descending | Select-Object -First 1
+              if (-not $tool) { throw "signtool.exe not found under Windows Kits" }
+              echo "SIGNTOOL_PATH=$($tool.FullName)" >> $env:GITHUB_ENV
+
           - os: windows-latest
             build-script: "pnpm --filter @workspace/desktop run dist -- --win"
           - os: macos-latest
