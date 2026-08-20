@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "LabyrinthV8 desktop app — runs the dashboard and API server locally so full-system scans see the machine it's installed on, not a remote host.",
-    "author": {
+  "author": {
     "name": "Blu Corbel aka DeadmanXXXII",
     "username": "HevvyDevvy",
     "email": "blucorbel35@gmail.com"
@@ -42,7 +42,13 @@
     },
     "win": {
       "icon": "build-resources/icon.png",
-      "target": ["nsis"]
+      "target": ["nsis", "appx"]
+    },
+    "appx": {
+      "identityName": "TMHP.com.LabyrinthV8",
+      "publisher": "CN=BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
+      "publisherDisplayName": "@TMHP.com",
+      "applicationId": "LabyrinthV8"
     },
     "nsis": {
       "oneClick": false,
