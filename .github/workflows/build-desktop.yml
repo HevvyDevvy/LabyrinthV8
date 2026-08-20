@@ -1,0 +1,78 @@
+name: Build desktop app
+
+# Builds LabyrinthV8 as a downloadable desktop installer for Windows, macOS,
+# and Linux. Unlike the GitHub Pages + Render deployment, this bundles the
+# API server to run locally, so "full-system scan" in the dashboard actually
+# sees the machine LabyrinthV8 is installed on.
+#
+# NOTE ON CODE SIGNING: these installers are NOT code-signed. Windows will
+# show a SmartScreen "unknown publisher" warning, and macOS Gatekeeper will
+# block the app until the person right-clicks -> Open (or runs
+# `xattr -d com.apple.quarantine LabyrinthV8.app`). Proper signing needs a
+# paid Apple Developer ID and a Windows code-signing certificate — add
+# CSC_LINK / CSC_KEY_PASSWORD (and the Apple equivalents) as repo secrets
+# and pass them to electron-builder here if/when you have those.
+
+on:
+  workflow_dispatch: {}
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build-script: "pnpm --filter @workspace/desktop run dist -- --linux"
+          - os: windows-latest
+            build-script: "pnpm --filter @workspace/desktop run dist -- --win"
+          - os: macos-latest
+            build-script: "pnpm --filter @workspace/desktop run dist -- --mac"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build installer (${{ matrix.os }})
+        working-directory: .
+        run: ${{ matrix.build-script }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: labyrinthv8-desktop-${{ matrix.os }}
+          path: |
+            artifacts/desktop/release/*.dmg
+            artifacts/desktop/release/*.exe
+            artifacts/desktop/release/*.AppImage
+            artifacts/desktop/release/*.deb
+          if-no-files-found: warn
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/desktop/release/*.dmg
+            artifacts/desktop/release/*.exe
+            artifacts/desktop/release/*.AppImage
+            artifacts/desktop/release/*.deb

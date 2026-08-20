@@ -1,0 +1,51 @@
+{
+  "name": "@workspace/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LabyrinthV8 desktop app — runs the dashboard and API server locally so full-system scans see the machine it's installed on, not a remote host.",
+  "main": "electron-main.cjs",
+  "scripts": {
+    "prepare-resources": "node ./scripts/prepare.mjs",
+    "dev": "pnpm run prepare-resources && electron .",
+    "dist": "pnpm run prepare-resources && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "io.github.hevvydevvy.labyrinthv8",
+    "productName": "LabyrinthV8",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "electron-main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "resources/server", "to": "server" },
+      { "from": "resources/dashboard", "to": "dashboard" }
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build-resources/icon.png",
+      "target": ["dmg"]
+    },
+    "win": {
+      "icon": "build-resources/icon.png",
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "icon": "build-resources/icon.png",
+      "category": "Utility",
+      "target": ["AppImage", "deb"]
+    }
+  }
+}
