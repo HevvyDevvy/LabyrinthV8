@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "description": "LabyrinthV8 desktop app — runs the dashboard and API server locally so full-system scans see the machine it's installed on, not a remote host.",
+    "author": {
+    "name": "HevvyDevvy",
+    "email": "blucorbel35@gmail.com"
+  },
+  "homepage": "https://github.com/HevvyDevvy/LabyrinthV8",
   "main": "electron-main.cjs",
   "scripts": {
     "prepare-resources": "node ./scripts/prepare.mjs",
