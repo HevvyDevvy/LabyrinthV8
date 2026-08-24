@@ -8,7 +8,7 @@
     "username": "HevvyDevvy",
     "email": "blucorbel35@gmail.com"
   },
-  "homepage": "https://github.com/HevvyDevvy/LabyrinthV8",
+  "homepage": "https://www.hopp.bio/the-mad-hatters-playground",
   "desktopName": "LabyrinthV8",
   "main": "electron-main.cjs",
   "scripts": {
@@ -55,7 +55,8 @@
       "identityName": "TMHP.com.LabyrinthV8",
       "publisher": "CN=BB6CF6A1-F89B-484C-85F4-1A7E35694B74",
       "publisherDisplayName": "@TMHP.com",
-      "applicationId": "LabyrinthV8"
+      "applicationId": "LabyrinthV8",
+      "url": "https://www.hopp.bio/the-mad-hatters-playground"
     },
     "nsis": {
       "oneClick": false,
