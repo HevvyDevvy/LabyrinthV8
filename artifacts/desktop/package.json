@@ -29,8 +29,10 @@
       "buildResources": "build-resources"
     },
     "files": [
-      "electron-main.cjs",
-      "package.json"
+    "electron-main.cjs",
+    "splash.html",
+    "logo.png",
+    "package.json"
     ],
     "extraResources": [
       { "from": "resources/server", "to": "server" },
