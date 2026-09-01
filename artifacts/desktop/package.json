@@ -31,7 +31,7 @@
     "files": [
     "electron-main.cjs",
     "splash.html",
-    "logo.png",
+    "splash-logo.png",
     "package.json"
     ],
     "extraResources": [
