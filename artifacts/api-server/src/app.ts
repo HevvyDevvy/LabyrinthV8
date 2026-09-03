@@ -45,8 +45,24 @@ const configuredOrigins = (process.env.ALLOWED_ORIGINS ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 const isProduction = process.env.NODE_ENV === "production";
+
+// The desktop (Electron) build is inherently single-origin: this same
+// process serves both the API and the UI on 127.0.0.1 at whatever port it
+// was told to listen on. That origin is always safe to allow — it's this
+// server's own address, not a third party — so it doesn't depend on
+// ALLOWED_ORIGINS being configured. Without this, the packaged desktop
+// app's own dashboard JS gets every one of its API calls rejected by CORS
+// in production (top-level page navigation isn't blocked, since that
+// doesn't send an Origin header, which is why the window opens fine but
+// the dashboard then hangs on "loading" forever — every fetch it makes
+// after that is silently rejected).
+const selfOrigins = process.env.PORT
+  ? [`http://127.0.0.1:${process.env.PORT}`, `http://localhost:${process.env.PORT}`]
+  : [];
+
 const allowedOrigins = new Set([
   ...configuredOrigins,
+  ...selfOrigins,
   ...(isProduction ? [] : devDefaultOrigins),
 ]);
 
