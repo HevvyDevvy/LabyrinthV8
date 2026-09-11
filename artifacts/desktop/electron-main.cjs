@@ -18,6 +18,19 @@ const fs = require("node:fs");
 const { spawn } = require("node:child_process");
 const net = require("node:net");
 
+// Disable GPU-accelerated compositing. Verified necessary during direct
+// testing of this exact app: under constrained/virtualized graphics (no
+// real GPU driver, software rendering only), Chromium's renderer process
+// throws GPU/SharedImage errors and can hang during initialization instead
+// of crashing outright — meaning the window opens, the splash shows, but
+// the page never finishes loading and nothing ever surfaces an error.
+// Certification test machines and much real-world enterprise Windows
+// hardware run in exactly this kind of constrained graphics environment
+// (basic/virtualized drivers, no dedicated GPU), so this is not optional
+// for a packaged build even though it's rarely needed on a developer's own
+// well-equipped machine. Must be called before app.whenReady().
+app.disableHardwareAcceleration();
+
 const isDev = !app.isPackaged;
 
 // In a packaged app, extraResources land in process.resourcesPath. In dev
@@ -123,6 +136,16 @@ async function startServer() {
   }
 
   let earlyExitError = null;
+  // Without this, a spawn-level failure (the process never actually starts
+  // — e.g. ENOENT, EACCES, a blocked launch) emits an unhandled 'error'
+  // event on serverProcess. Node's default behavior for an unhandled
+  // 'error' event is to throw, which can crash the main process in a way
+  // that bypasses the dialog/logging below entirely and produces no crash
+  // dump — silent failure, indistinguishable from a hang. Always handle it.
+  serverProcess.on("error", (err) => {
+    earlyExitError = new Error(`Failed to launch server process: ${err.message}. See log: ${logPath}`);
+    logStream.write(`[main] spawn error: ${err.stack || err.message}\n`);
+  });
   serverProcess.on("exit", (code, signal) => {
     if (code !== 0 && code !== null) {
       earlyExitError = new Error(
@@ -139,6 +162,9 @@ async function startServer() {
     await Promise.race([
       waitForServer(port),
       new Promise((_, reject) => {
+        serverProcess.once("error", (err) => {
+          reject(earlyExitError || new Error(`Failed to launch server process: ${err.message}`));
+        });
         serverProcess.once("exit", (code, signal) => {
           if (code !== 0 && code !== null) {
             reject(
@@ -220,7 +246,23 @@ async function createWindow() {
   });
 
   setSplashStatus("Loading dashboard…");
-  await mainWindow.loadURL(`http://127.0.0.1:${port}/`);
+
+  // Bounded timeout on the actual page load, independent of whatever the
+  // root cause of a hang might be (GPU init, a networking stack fault, or
+  // something not yet seen). This is the direct fix for the cert
+  // requirement itself — "must not load indefinitely" — regardless of
+  // which underlying cause triggers it: after 20s with no result, the user
+  // sees a real error and a way forward, instead of an unbounded silent
+  // hang with no crash and no message.
+  await Promise.race([
+    mainWindow.loadURL(`http://127.0.0.1:${port}/`),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Dashboard did not finish loading within 20 seconds.")),
+        20000,
+      ),
+    ),
+  ]);
 
   // Swap splash -> real window only once content has actually loaded, so
   // there's never a blank frame in between.
@@ -233,6 +275,8 @@ async function createWindow() {
 app.whenReady().then(() => {
   createWindow().catch((err) => {
     console.error("Failed to start LabyrinthV8:", err);
+    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
     dialog.showErrorBox(
       "LabyrinthV8 failed to start",
       `${err.message}\n\nIf this keeps happening, check the log file mentioned above ` +
