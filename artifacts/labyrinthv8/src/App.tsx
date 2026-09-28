@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
@@ -52,6 +52,12 @@ import '@/index.css';
 
 const queryClient = new QueryClient();
 
+// How often the Overview page silently re-polls in the background.
+// Matches a "quiet" cadence rather than the backend's own scan interval —
+// this just makes sure a scan hit that landed while the operator was on
+// another page shows up without them having to navigate away and back.
+const OVERVIEW_AUTO_REFRESH_MS = 120_000; // 2 minutes
+
 function formatTime(value: string | null | undefined) {
   if (!value) return '—';
   const date = new Date(value);
@@ -68,6 +74,18 @@ function formatRelative(value: string | null | undefined) {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
+}
+
+// Polls `refetch` on an interval while `enabled` is true, skipping ticks
+// when the tab is hidden so background tabs don't hammer the API.
+function useAutoRefetch(refetch: () => void, intervalMs: number, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') refetch();
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [refetch, intervalMs, enabled]);
 }
 
 function Skeleton({ className = '' }: { className?: string }) {
@@ -337,13 +355,50 @@ function Overview() {
   const alertsQuery = useGetSecurityAlerts();
   const pendingQuery = useGetPendingRequests();
   const auditQuery = useGetAuditTrail();
+
+  // Overview only invalidates on approve/deny elsewhere in the app — without
+  // this, a scan hit landing while the operator is on another page never
+  // appears here until they navigate away and back. Quiet background poll,
+  // paused when the tab isn't visible.
+  useAutoRefetch(summaryQuery.refetch, OVERVIEW_AUTO_REFRESH_MS);
+  useAutoRefetch(alertsQuery.refetch, OVERVIEW_AUTO_REFRESH_MS);
+  useAutoRefetch(pendingQuery.refetch, OVERVIEW_AUTO_REFRESH_MS);
+  useAutoRefetch(auditQuery.refetch, OVERVIEW_AUTO_REFRESH_MS);
+
+  const isRefreshing = summaryQuery.isFetching || alertsQuery.isFetching || pendingQuery.isFetching || auditQuery.isFetching;
+  const refreshAll = () => {
+    summaryQuery.refetch();
+    alertsQuery.refetch();
+    pendingQuery.refetch();
+    auditQuery.refetch();
+  };
+
   const summary = summaryQuery.data;
   const alerts = alertsQuery.data ?? [];
   const pending = pendingQuery.data ?? [];
   const criticalCount = summary?.criticalAlerts ?? alerts.filter((alert) => alert.severity === 'critical').length;
   return (
     <div>
-      <PageHeading eyebrow="Security overview / live" title="Quiet protection, clear evidence." detail="A focused view of what needs a human eye today. No action is taken without a named operator." action={<Link href="/audit" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-bold hover-elevate" data-testid="link-open-audit"><Fingerprint size={15} className="text-primary" /> Inspect audit chain <ArrowUpRight size={14} /></Link>} />
+      <PageHeading
+        eyebrow="Security overview / live"
+        title="Quiet protection, clear evidence."
+        detail="A focused view of what needs a human eye today. No action is taken without a named operator."
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refreshAll}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-bold hover-elevate disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="button-refresh-overview"
+            >
+              <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} /> Refresh
+            </button>
+            <Link href="/audit" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-xs font-bold hover-elevate" data-testid="link-open-audit">
+              <Fingerprint size={15} className="text-primary" /> Inspect audit chain <ArrowUpRight size={14} />
+            </Link>
+          </div>
+        }
+      />
       <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {summaryQuery.isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton className="h-[139px] rounded-xl" key={i} />) : <>
           <MetricCard label="Pending review" value={summary?.pending ?? pending.length} detail="protection requests" icon={Clock3} tone="warm" testId="metric-pending" />
